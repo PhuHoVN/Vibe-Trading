@@ -30,6 +30,7 @@ class TestSymbolGating:
         assert _is_supported("PNG.V") is True
         assert _detect_market("PNG.V") == "ca_equity"
         assert _detect_market("VIC.VN") != "ca_equity"
+        assert _detect_market("HOSE:VIC") == "vietnam_equity"
 
 
 class TestSymbolMapping:
@@ -44,7 +45,7 @@ class TestSymbolMapping:
 
 class TestFallbackChain:
     def test_vietnam_chain(self) -> None:
-        assert FALLBACK_CHAINS["vietnam_equity"] == ["yahoo", "yfinance", "local"]
+        assert FALLBACK_CHAINS["vietnam_equity"] == ["ssi", "yahoo", "yfinance", "local"]
 
     def test_yahoo_declares_vietnam_market(self) -> None:
         assert "vietnam_equity" in DataLoader.markets
