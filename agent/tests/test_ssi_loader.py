@@ -114,8 +114,8 @@ def test_fetch_daily_with_fake_sdk(monkeypatch) -> None:
             calls["authenticated"] = True
 
     class FakeMarketData:
-        def get_ohlc_1day_historical(self, symbol, *, from_date, to_date):
-            calls["ohlc"] = (symbol, from_date, to_date)
+        def get_ohlc_1day_historical(self, symbol, *, from_date, to_date, page, size):
+            calls["ohlc"] = (symbol, from_date, to_date, page, size)
             return _candles()
 
     class FakeData:
@@ -138,6 +138,8 @@ def test_fetch_daily_with_fake_sdk(monkeypatch) -> None:
         "FPT",
         "2026/09/01 00:00:00",
         "2026/09/23 23:59:59",
+        1,
+        1000,
     )
     assert out["FPT.VN"]["volume"].tolist() == [1000.0, 2000.0]
 
@@ -161,8 +163,9 @@ def test_fetch_explicit_hose_symbol_with_fake_sdk(monkeypatch) -> None:
             pass
 
     class FakeMarketData:
-        def get_ohlc_1day_historical(self, symbol, *, from_date, to_date):
+        def get_ohlc_1day_historical(self, symbol, *, from_date, to_date, page, size):
             calls["symbol"] = symbol
+            calls["page_size"] = (page, size)
             return _candles()
 
     class FakeData:
@@ -177,6 +180,7 @@ def test_fetch_explicit_hose_symbol_with_fake_sdk(monkeypatch) -> None:
     out = DataLoader().fetch(["HOSE:FPT"], "2026-09-01", "2026-09-23")
     assert list(out) == ["HOSE:FPT"]
     assert calls["symbol"] == "FPT"
+    assert calls["page_size"] == (1, 1000)
 
 
 def test_hnx_and_upcom_are_rejected_in_hose_phase(monkeypatch) -> None:
