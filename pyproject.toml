@@ -111,6 +111,11 @@ include = ["src*", "backtest*", "cli*", "evals*"]
 "src.factors" = ["zoo/**/*.yaml", "zoo/**/*.md", "zoo/**/NOTICE"]
 
 [project.optional-dependencies]
+ssi = [
+    # SSI FastConnect V3 market-data SDK. Lazy-imported by ssi_loader so the
+    # base install stays lean for users outside Vietnam.
+    "ssi-sdk>=3.2.1,<4",
+]
 ibkr = [
     "ib_async>=2.0",
 ]

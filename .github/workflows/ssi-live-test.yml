@@ -1,0 +1,45 @@
+name: SSI Live Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [vietnam-market]
+    paths:
+      - "agent/backtest/loaders/ssi_loader.py"
+      - "agent/backtest/engines/vietnam_equity.py"
+      - "tools/ssi_live_canary.py"
+      - ".github/workflows/ssi-live-test.yml"
+
+jobs:
+  fpt-hose-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      SSI_CLIENT_ID: ${{ secrets.SSI_CLIENT_ID }}
+      SSI_API_KEY: ${{ secrets.SSI_API_KEY }}
+      SSI_API_SECRET: ${{ secrets.SSI_API_SECRET }}
+      PYTHONPATH: agent
+      VIBE_TRADING_DATA_CACHE: "0"
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Vibe-Trading with SSI SDK
+        run: pip install -e ".[ssi]"
+
+      - name: Verify SSI secrets are configured
+        shell: bash
+        run: |
+          test -n "$SSI_CLIENT_ID" || { echo "::error::Missing SSI_CLIENT_ID GitHub secret"; exit 1; }
+          test -n "$SSI_API_KEY" || { echo "::error::Missing SSI_API_KEY GitHub secret"; exit 1; }
+          test -n "$SSI_API_SECRET" || { echo "::error::Missing SSI_API_SECRET GitHub secret"; exit 1; }
+
+      - name: Run read-only FPT HOSE live canary
+        run: python tools/ssi_live_canary.py

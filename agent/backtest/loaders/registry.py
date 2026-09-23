@@ -51,6 +51,7 @@ VALID_SOURCES: set[str] = {
     "stooq",
     "yahoo",
     "finnhub",
+    "ssi",
     "alphavantage",
     "tiingo",
     "fmp",
@@ -113,6 +114,7 @@ def _ensure_registered() -> None:
             "backtest.loaders.stooq_loader",
             "backtest.loaders.yahoo_loader",
             "backtest.loaders.finnhub_loader",
+            "backtest.loaders.ssi_loader",
             "backtest.loaders.alphavantage_loader",
             "backtest.loaders.tiingo_loader",
             "backtest.loaders.fmp_loader",
@@ -153,7 +155,7 @@ def _ensure_registered() -> None:
 # as if it were Toman — a caliber error of about six orders of magnitude, not a
 # missing-data error. An unreachable Iranian endpoint must be visible.
 _NO_NETWORK_FALLBACK_SOURCES: frozenset[str] = frozenset(
-    {"local", "qveris", "tickerall", "fmp", "nobitex", "wallex"}
+    {"local", "qveris", "tickerall", "fmp", "nobitex", "wallex", "ssi"}
 )  # QVERIS-INTEGRATION
 
 
@@ -224,9 +226,9 @@ FALLBACK_CHAINS: dict[str, list[str]] = {
     "ar_equity": ["yahoo", "yfinance", "local"],
     # UK (LSE .L): direct Yahoo first, SDK fallback second.
     "uk_equity": ["yahoo", "yfinance", "local"],
-    # Vietnam (.VN): Yahoo lists HOSE only — HNX and UPCOM are unsupported,
-    # so those two are reachable only through the user's local files.
-    "vietnam_equity": ["yahoo", "yfinance", "local"],
+    # Vietnam: SSI FastConnect V3 is the native source for HOSE/HNX/UPCOM.
+    # Yahoo/yfinance remain public fallbacks for symbols they can serve.
+    "vietnam_equity": ["ssi", "yahoo", "yfinance", "local"],
     # OKX first (native), then dedicated Binance, then generic CCXT / Yahoo.
     "crypto": ["okx", "binance", "ccxt", "yfinance", "local"],
     # tushare led this chain while implementing no futures endpoint at all
@@ -633,6 +635,7 @@ def get_loader_cls_with_fallback(source: str) -> Type[Any]:
             "list at least one source.",
             "tickerall": "Set TICKERALL_API_KEY and TICKERALL_ACCOUNT_ID.",
             "fmp": "Set FMP_API_KEY.",
+            "ssi": "Install the SSI extra and set SSI_CLIENT_ID, SSI_API_KEY, and SSI_API_SECRET.",
             "nobitex": "Nobitex's public endpoint was unreachable. It quotes in "
             "Toman (IRT) and has no substitute — check network access "
             "to apiv2.nobitex.ir.",
