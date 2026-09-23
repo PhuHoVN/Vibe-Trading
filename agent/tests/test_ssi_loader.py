@@ -11,7 +11,7 @@ import pandas as pd
 
 from backtest.loaders import ssi_loader as mod
 from backtest.loaders.registry import FALLBACK_CHAINS, is_no_network_fallback_source
-from backtest.loaders.ssi_loader import DataLoader, _normalize, map_symbol
+from backtest.loaders.ssi_loader import DataLoader, _is_hose_symbol, _normalize, map_symbol
 
 
 def _set_credentials(monkeypatch) -> None:
@@ -47,6 +47,10 @@ def test_symbol_mapping() -> None:
     assert map_symbol("hose:fpt") == "FPT"
     assert map_symbol("HNX:SHS") == "SHS"
     assert map_symbol("UPCOM:ACV") == "ACV"
+    assert _is_hose_symbol("FPT.VN") is True
+    assert _is_hose_symbol("HOSE:FPT") is True
+    assert _is_hose_symbol("HNX:SHS") is False
+    assert _is_hose_symbol("UPCOM:ACV") is False
 
 
 def test_normalize_sdk_models() -> None:
@@ -136,6 +140,49 @@ def test_fetch_daily_with_fake_sdk(monkeypatch) -> None:
         "2026/09/23 23:59:59",
     )
     assert out["FPT.VN"]["volume"].tolist() == [1000.0, 2000.0]
+
+
+def test_fetch_explicit_hose_symbol_with_fake_sdk(monkeypatch) -> None:
+    _set_credentials(monkeypatch)
+    calls = {}
+
+    class FakeConfig:
+        def __init__(self, **kwargs):
+            calls["config"] = kwargs
+
+    class FakeAuth:
+        def __init__(self, config):
+            self.config = config
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            return False
+        def authenticate(self):
+            pass
+
+    class FakeMarketData:
+        def get_ohlc_1day_historical(self, symbol, *, from_date, to_date):
+            calls["symbol"] = symbol
+            return _candles()
+
+    class FakeData:
+        def __init__(self, auth):
+            self.market_data = FakeMarketData()
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            return False
+
+    monkeypatch.setattr(mod, "_load_sdk", lambda: (FakeAuth, FakeConfig, FakeData))
+    out = DataLoader().fetch(["HOSE:FPT"], "2026-09-01", "2026-09-23")
+    assert list(out) == ["HOSE:FPT"]
+    assert calls["symbol"] == "FPT"
+
+
+def test_hnx_and_upcom_are_rejected_in_hose_phase(monkeypatch) -> None:
+    _set_credentials(monkeypatch)
+    monkeypatch.setattr(mod, "_load_sdk", lambda: (object, object, object))
+    assert DataLoader().fetch(["HNX:SHS", "UPCOM:ACV"], "2026-09-01", "2026-09-23") == {}
 
 
 def test_non_daily_interval_is_rejected(monkeypatch) -> None:
