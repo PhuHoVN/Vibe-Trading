@@ -62,6 +62,8 @@ def _is_supported(code: str) -> bool:
     upper = code.strip().upper()
     if upper.startswith("^"):
         return True
+    if upper.startswith("HOSE:"):
+        return bool(upper.split(":", 1)[1])
     return upper.endswith(
         (
             ".US", ".HK", ".NS", ".BO", ".KS", ".KQ", ".TO", ".V", ".VN", ".BA",
