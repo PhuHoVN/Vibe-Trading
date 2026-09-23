@@ -25,6 +25,14 @@ _OHLCV_COLUMNS = ["open", "high", "low", "close", "volume"]
 _DAILY_ALIASES = {"1d", "d", "day", "daily"}
 
 
+def _is_hose_symbol(code: str) -> bool:
+    """Return whether code is supported by the current HOSE-only phase."""
+    upper = str(code).strip().upper()
+    if upper.startswith(("HNX:", "UPCOM:")):
+        return False
+    return upper.startswith("HOSE:") or upper.endswith(".VN")
+
+
 def map_symbol(code: str) -> str:
     """Map a Vibe-Trading Vietnam symbol to SSI's bare ticker convention."""
     symbol = str(code).strip().upper()
@@ -159,6 +167,13 @@ class DataLoader:
 
         result: Dict[str, pd.DataFrame] = {}
         for code in codes:
+            if not _is_hose_symbol(code):
+                logger.warning(
+                    "ssi HOSE phase skipped unsupported symbol %s; use HOSE:TICKER "
+                    "or TICKER.VN until HNX/UPCOM rules are implemented",
+                    code,
+                )
+                continue
             try:
                 frame = cached_loader_fetch(
                     source=self.name,
