@@ -209,8 +209,10 @@ class DataLoader:
             auth.authenticate()
             with Data(auth) as data:
                 candles = data.market_data.get_ohlc_1day_historical(
-                    map_symbol(code),
+                    symbol=map_symbol(code),
                     from_date=_ssi_date(start_date, end_of_day=False),
                     to_date=_ssi_date(end_date, end_of_day=True),
+                    page=1,
+                    size=1000,
                 )
         return _normalize(candles)
