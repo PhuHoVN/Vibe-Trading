@@ -27,6 +27,8 @@ class TestMarketDetection:
     def test_vn_symbols_route_to_vietnam(self) -> None:
         assert _detect_market("VIC.VN") == "vietnam_equity"
         assert _detect_market("vic.vn") == "vietnam_equity"
+        assert _detect_market("HOSE:VIC") == "vietnam_equity"
+        assert _detect_market("hose:fpt") == "vietnam_equity"
 
     def test_tsx_venture_still_routes_to_canada(self) -> None:
         # ``.V`` and ``.VN`` are distinct suffixes; neither may claim the other.
