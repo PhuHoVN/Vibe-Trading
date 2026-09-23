@@ -61,6 +61,9 @@ def _to_yfinance_symbol(code: str) -> str:
         yfinance-compatible symbol.
     """
     upper = code.strip().upper()
+    if upper.startswith("HOSE:"):
+        ticker = upper.split(":", 1)[1]
+        return f"{ticker}.VN"
     if upper.endswith(".US"):
         # US class shares are hyphenated on Yahoo/yfinance (BRK-B): the dot
         # form returns empty data (live-verified), so map BRK.B.US -> BRK-B.
